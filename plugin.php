@@ -4,7 +4,7 @@
  * Plugin URI: http://fusionspan.com
  * Description: Allows for easier netforum integration into wordpress
  * Author: fusionSpan
- * Version: 1.0.2
+ * Version: 1.0.3
  */
 
 if (!defined('ABSPATH')) wp_die("Script should not be called directly");
