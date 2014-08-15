@@ -1,4 +1,4 @@
-=== Netforum Directory Importer ===
+=== Netforum Member Directory ===
 Contributors: gkher
 Donate link: http://fusiopnspan.com/
 Tags: avectra, netforum, netforum import, plugin
