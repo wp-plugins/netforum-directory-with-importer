@@ -1,10 +1,10 @@
 <?php
 /**
- * Plugin Name: fusionSpan Netforum Directory Importer
+ * Plugin Name: fusionSpan Netforum Directory with Importer
  * Plugin URI: http://fusionspan.com
  * Description: Allows for easier netforum integration into wordpress
  * Author: fusionSpan
- * Version: 1.0.1
+ * Version: 1.0.2
  */
 
 if (!defined('ABSPATH')) wp_die("Script should not be called directly");
@@ -27,6 +27,7 @@ class fs_netforum_plugin {
 		global $post;
 		//add to header if shortcode is on page
 		if( is_a($post, 'WP_Post') && has_shortcode($post->post_content, self::$table_shortcode)){
+			wp_enqueue_script('jquery');
 			wp_enqueue_script('fsnet_tableDisplay',plugins_url('js/tableDisplay.js',__FILE__));
 			wp_enqueue_script('fsnet_dataTablesMin',plugins_url('js/Datatables/jquery.dataTables.min.js',__FILE__));
 			wp_enqueue_style('fsnet_dataTablesMin_css',plugins_url('css/jquery.dataTables.min.css',__FILE__));
@@ -101,30 +102,33 @@ function json_table($atts) {
 			$short_attrs['limit']));	
 		}
 		
-		echo "<script>displayTable('". addcslashes(json_encode($results), "'")."','" . $rows_to_display . "');"
-				."</script>";
+		$retVal = "<script>//<![CDATA[ 
+			displayTable('". addcslashes(json_encode($results), "'")."','" . $rows_to_display . "');"
+				."//]]>
+				</script>";
 		
-	?>
+	$retVal .= '
 <div class="container">
 	<section>
 		<table id="example1" class="display"
 			cellspacing="0" width="100%">
 			<thead style="background-color: #A1A0A0;">
-			<tr>
-			<?php
-				echo $out_str;
-			?>
-			</tr>
+			<tr>'
+		
+				.$out_str.
+			
+			'</tr>
 			</thead>
 			<tfoot style="background-color: #A1A0A0;">
-				<tr>
-				<?php	echo $out_str; ?>
-				</tr>
+				<tr>'
+				.$out_str.
+				'</tr>
 			</tfoot>
 		</table>
 	</section>
 </div>
-<?php
+';
+	return $retVal;
 				
 	}
 	
