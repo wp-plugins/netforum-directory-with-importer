@@ -4,7 +4,7 @@
  * Plugin URI: http://fusionspan.com
  * Description: Allows for easier netforum integration into wordpress
  * Author: fusionSpan
- * Version: 1.0.3
+ * Version: 1.0.4
  */
 
 if (!defined('ABSPATH')) wp_die("Script should not be called directly");
@@ -12,27 +12,34 @@ if (!defined('ABSPATH')) wp_die("Script should not be called directly");
 class fs_netforum_plugin {
 	private $updateFlag = true;
 	static $table_shortcode = "member_table";
-	static $database_version = "1.1";
+	static $json_shortcode = "member_table_url";
+	static $database_version = "1.2";
 	
 	public function __construct(){
 		add_action('admin_menu', array($this, 'fs_plugin_menu'));
 		register_activation_hook(__FILE__, array($this, 'fs_install'));
 		add_action( 'wp_enqueue_scripts', array($this,'javascript_table_load'));
 		add_shortcode( self::$table_shortcode , array($this, 'json_table'));
+		add_shortcode(self::$json_shortcode, array($this,'pure_json'));
 		add_action( 'admin_enqueue_scripts', array($this, 'add_jquery_ui'));
+		register_deactivation_hook(__FILE__, array($this, 'remove_json_pass'));
 	}
 
 	
 	function javascript_table_load(){
 		global $post;
 		//add to header if shortcode is on page
-		if( is_a($post, 'WP_Post') && has_shortcode($post->post_content, self::$table_shortcode)){
+		if( is_a($post, 'WP_Post') && (has_shortcode($post->post_content, self::$table_shortcode) || has_shortcode($post->post_content, self::$json_shortcode))){
 			wp_enqueue_script('jquery');
 			wp_enqueue_script('fsnet_tableDisplay',plugins_url('js/tableDisplay.js',__FILE__));
 			wp_enqueue_script('fsnet_dataTablesMin',plugins_url('js/Datatables/jquery.dataTables.min.js',__FILE__));
 			wp_enqueue_style('fsnet_dataTablesMin_css',plugins_url('css/jquery.dataTables.min.css',__FILE__));
 			wp_enqueue_style('fsnet_dataTablesThemeRollerMin_css',plugins_url('css/jquery.dataTables_themeroller.min.css',__FILE__));
 		} 
+	}
+	
+	function remove_json_pass(){
+		delete_option('fsnet_json_key');
 	}
 	
 	/**
@@ -44,6 +51,31 @@ class fs_netforum_plugin {
 			return;
 		wp_enqueue_script('jquery-ui-sortable');
 		wp_enqueue_style('fsnet_import_style',plugins_url("css/importTable.css",__FILE__));
+	}
+	
+	function pure_json($atts){
+		$short_attrs = shortcode_atts( array(
+				'limit' => -1,
+				'display_members_only' => 1,
+				'ignore_do_not_display_online' => 0,
+				'display_fields' => 'first name, last name, title, email, city, state'
+		), $atts);
+	
+	
+		$keys = array_keys($short_attrs);
+		$plaintext = "datain|".time();
+		foreach($keys as $curr){
+			$plaintext .= "|".$curr.":".$short_attrs[$curr];
+		}
+		$vals = implode(":", $short_attrs);
+		$iv_size = openssl_cipher_iv_length("aes128");
+	
+		$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+		$pass = get_option('fsnet_json_key');
+		$ciphertext = openssl_encrypt($plaintext, "aes128", $pass, 0, $iv);
+	
+		$ciphertext= urlencode($ciphertext);
+		return plugins_url('memberInfoToJson.php', __FILE__)."?data=".$ciphertext.'&iv='. urlencode(base64_encode($iv));
 	}
 	
 function json_table($atts) {
@@ -301,6 +333,14 @@ function json_table($atts) {
 	 */
 	function fs_install(){
 		global $wpdb;
+		$chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		$pass ="";
+		$len = strlen($chars);
+		for ($i = 0; $i < 12; $i++){
+			$pass .= $chars[mt_rand(0, $len - 1)];
+		}
+		
+		add_option('fsnet_json_key',$pass,"","no");
 		
 		if (get_option('fsnet_db_version_input') != self::$database_version){
 		
@@ -311,8 +351,8 @@ function json_table($atts) {
 			
 			if(!empty($wpdb->collate)){
 				$wp_charset_collate .= " COLLATE '{$wpdb->collate}'";
-			}		
-		
+			}					
+			
 			$sql_users = "CREATE TABLE {$wpdb->prefix}fsnet_user_master (
 			id int(11) NOT NULL AUTO_INCREMENT,
 			external_id varchar(255) DEFAULT NULL,
@@ -339,7 +379,8 @@ function json_table($atts) {
 			do_not_publish_online BOOLEAN NOT NULL DEFAULT FALSE,
 			is_member BOOLEAN NOT NULL DEFAULT FALSE,
 			recv_benefits BOOLEAN NOT NULL DEFAULT FALSE,
-			PRIMARY KEY (id)
+			UNIQUE KEY external_id (external_id),
+			PRIMARY KEY  (id)
 			) {$wp_charset_collate};";
 			
 			
@@ -348,9 +389,15 @@ function json_table($atts) {
 			dbDelta($sql_users);
 	 
 		}
-		
-		update_option('fsnet_db_version_input', self::$database_version);
+
+		//checks if the table was created and set the version if it is
+		if($wpdb->get_var("SHOW TABLES LIKE '" . $wpdb -> prefix . "fsnet_user_master'") === $wpdb->prefix."fsnet_user_master") {
+			update_option('fsnet_db_version_import',self::$database_version);
+		}else{
+			delete_option('fsnet_db_version_import');
+		}
 	}
+			
 }
 
 new fs_netforum_plugin();
