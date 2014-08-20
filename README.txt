@@ -8,7 +8,7 @@ Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Display a member directory on any page on thw wordpress site. 
+Display a member directory on any page on the wordpress site. 
 Also comes with a GUI to make it easier to import information
 from netForum to wordpress.
 
@@ -73,7 +73,7 @@ The valid options are:
    - country
    - organization
 
-[member_table_url] has on addtional shortcode: ignore_do_not_display_online. The values are 1 and 0 with 1 showing records regardless of the 
+[member_table_url] has an addtional shortcode field: ignore_do_not_display_online. The values are 1 and 0 with 1 showing records regardless of the 
 value in the do_not_display_online_flag, and 0 only showing records that does not have this flag set to true. The default is 0.
 
 The shortcode fields can be used together eg. [member_table limit=50 display_members_only=1 display_fields="first name, email"] will
