@@ -252,6 +252,7 @@ function json_table($atts) {
 					<li>First Name</li>
 					<li>Middle Name</li>
 					<li>Last Name</li>
+					<li>Email</li>
 					<li>Title</li>
 					<li>Name Prefix</li>
 					<li>Name Suffix</li>
@@ -305,6 +306,7 @@ function json_table($atts) {
 			"first_name" => "name",
 			"middle_name" => "middle_name",
 			"last_name" => "last_name",
+			"email" => "email",
 			"title" => "title",
 			"name_prefix" => "name_prefix",
 			"name_suffix" => "name_suffix",
