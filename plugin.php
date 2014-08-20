@@ -4,7 +4,7 @@
  * Plugin URI: http://fusionspan.com
  * Description: Allows for easier netforum integration into wordpress
  * Author: fusionSpan
- * Version: 1.0.4
+ * Version: 1.0.5
  */
 
 if (!defined('ABSPATH')) wp_die("Script should not be called directly");
@@ -97,8 +97,20 @@ function json_table($atts) {
 		$short_attrs = shortcode_atts( array(
         'limit' => -1,
 		'display_members_only' => 1,
-		'display_fields' => 'first name, last name, title, email, city, state'
-    	), $atts );		
+		'display_fields' => 'first name, last name, title, email, city, state',
+		'ignore_do_not_display_online' => 0,
+		'thead_color' => '#A1A0A0',
+		'tfoot_color' => '#A1A0A0',
+		'color' => '-1'
+    	), $atts );
+			
+		$andFlag = false;
+		$do_not_disp = "";
+		if($short_attrs['ignore_do_not_display_online'] == 0){
+			$do_not_disp = "do_not_publish_online=0";
+			$andFlag = true;
+		}
+		
 		$results=[];
 		$fields = explode(",", $short_attrs['display_fields']);
 		$out_str ="";
@@ -116,21 +128,32 @@ function json_table($atts) {
 		$rows_to_display = rtrim($rows_to_display, ",");
 		
 		if($short_attrs['limit'] < 0 && $short_attrs['display_members_only'] == 0){
-		
-			$results = $wpdb->get_results("SELECT ".$rows_to_display." FROM {$wpdb -> prefix}fsnet_user_master WHERE do_not_publish_online=0");
+			if($short_attrs['ignore_do_not_display_online'] == 0){
+				$results = $wpdb->get_results("SELECT ".$rows_to_display." FROM {$wpdb -> prefix}fsnet_user_master WHERE " . $do_not_disp);
+			}else{
+				$results = $wpdb->get_results("SELECT ".$rows_to_display." FROM {$wpdb -> prefix}fsnet_user_master");
+			}
 			
 		}else if($short_attrs['limit'] >= 0 && $short_attrs['display_members_only'] == 0){
-		
-			$results = $wpdb->get_results ( 
-				$wpdb->prepare("SELECT ".$rows_to_display." FROM {$wpdb -> prefix}fsnet_user_master WHERE do_not_publish_online=0 LIMIT %d",$short_attrs['limit']));	
+			if($short_attrs['ignore_do_not_display_online'] == 0){
+				$results = $wpdb->get_results ( 
+					$wpdb->prepare("SELECT ".$rows_to_display." FROM {$wpdb -> prefix}fsnet_user_master WHERE {$do_not_disp} LIMIT %d",$short_attrs['limit']));	
+			}else{
+				$results = $wpdb->get_results (
+						$wpdb->prepare("SELECT ".$rows_to_display." FROM {$wpdb -> prefix}fsnet_user_master LIMIT %d",$short_attrs['limit']));
+			}
 		}else if($short_attrs['limit'] < 0 && $short_attrs['display_members_only'] == 1){
-		
-			$results = $wpdb->get_results("SELECT ".$rows_to_display." FROM {$wpdb -> prefix}fsnet_user_master WHERE do_not_publish_online=0 AND (is_member = 1 OR recv_benefits = 1)");		
+			if($andFlag){
+				$do_not_disp.= " AND";
+			}
+			$results = $wpdb->get_results("SELECT ".$rows_to_display." FROM {$wpdb -> prefix}fsnet_user_master WHERE {$do_not_disp} (is_member = 1 OR recv_benefits = 1)");		
 			
 		}else if ($short_attrs['limit'] >= 0 && $short_attrs['display_members_only'] == 1){
-			
+			if($andFlag){
+				$do_not_disp.= " AND";
+			}
 			$results = $wpdb->get_results($wpdb->prepare
-			("SELECT ".$rows_to_display." FROM {$wpdb -> prefix}fsnet_user_master WHERE do_not_publish_online=0 AND (is_member = 1 OR recv_benefits = 1) LIMIT %d",
+			("SELECT ".$rows_to_display." FROM {$wpdb -> prefix}fsnet_user_master WHERE {$do_not_disp} (is_member = 1 OR recv_benefits = 1) LIMIT %d",
 			$short_attrs['limit']));	
 		}
 		
@@ -139,19 +162,29 @@ function json_table($atts) {
 				."//]]>
 				</script>";
 		
-	$retVal .= '
+		$color_head = "#A1A0A0";
+		$color_foot = "#A1A0A0";
+		if(strcmp($short_attrs['color'], '-1') != 0){
+			$color_foot = $short_attrs['color'];
+			$color_head = $short_attrs['color'];
+		}else{
+			$color_head = $short_attrs['thead_color'];
+			$color_foot = $short_attrs['tfoot_color'];
+		}
+			
+		$retVal .= '
 <div class="container">
 	<section>
 		<table id="example1" class="display"
 			cellspacing="0" width="100%">
-			<thead style="background-color: #A1A0A0;">
+			<thead style="background-color: '. $color_head .' ;">
 			<tr>'
 		
 				.$out_str.
 			
 			'</tr>
 			</thead>
-			<tfoot style="background-color: #A1A0A0;">
+			<tfoot style="background-color: '. $color_foot . ';">
 				<tr>'
 				.$out_str.
 				'</tr>
@@ -232,7 +265,7 @@ function json_table($atts) {
 					<li>Phone No</li>
 					<li>Domain Name</li>
 					<li>Employment Organisation</li>
-					<li>Do Not Publish Online</li>
+					<li id="keep">Do Not Publish Online</li>
 					<li id="keep">Customer Member Flag</li>
 					<li id="keep">Receives Benefits Flag</li>
 				</ul>
@@ -244,16 +277,20 @@ function json_table($atts) {
 				</ul>
 			</div>
 
-<form id="import_frm"
-	class="import_form" name="import_form"
-	method="post"
+<form id="import_frm" class="import_form" name="import_form"
+	enctype="multipart/form-data" method="post"
 	<?php echo 'action ="'.str_replace( '%7E', '~', $_SERVER['REQUEST_URI']).'"';?>>
 	<input type="hidden" name="process_import" value="true" /> <label
-		for="file_name">Local Path of CSV File To Import (e.g
-		/home/user/file.csv):&nbsp;&nbsp;</label> <input name="filename"
-		id="file_name" type="text" style="margin-top: 5px"/><br> <input type="submit"
-		value="Import Files" />
+		for="file_name">Select File to Import:&nbsp;&nbsp;</label> <input name="filename"
+		id="file_name" type="file" style="margin-top: 5px" /><br> <input
+		id="import_but" type="submit" value="Import Files" />
 </form>
+
+<div id="mem_desc">
+	<p>You can display a table on any page using the [member_table] shortcode
+		eg: [member_table display_fields = "first name, last name, city,
+		state, address1" limit=500 color=#CDCDCD]</p>
+</div>
 
 <?php 
 	}
@@ -286,12 +323,20 @@ function json_table($atts) {
 			"receives_benefits_flag" => "recv_benefits"
 		);	
 
-		$import_string = "LOAD DATA LOCAL INFILE '{$_POST['filename']}'" 
-						 ."INTO TABLE`{$wpdb -> prefix}fsnet_user_master`" 
-						 ."FIELDS TERMINATED BY ','" 
-						 ."ENCLOSED BY '\"'" 
-						 ."LINES TERMINATED BY '\n'"
-						 ."IGNORE 1 LINES ( ";
+		$local_path = $this->process_file_in();
+		if($local_path === -1){
+			echo "Error uploading file";
+			return;
+		}
+
+		$local_path = str_replace("\\", "/", $local_path);
+		
+		$import_string = "LOAD DATA LOCAL INFILE '{$local_path}'"
+						." INTO TABLE`{$wpdb -> prefix}fsnet_user_master`"
+						." FIELDS TERMINATED BY ','"
+						." ENCLOSED BY '\"'"
+						." LINES TERMINATED BY '\n'"
+						." IGNORE 1 LINES ( ";
 		
 		if(!isset($_POST['process_import'])){
 			echo '<div class="updated"><p><strong>An Error Occurred During Import. 1</strong></p></div>';
@@ -322,6 +367,30 @@ function json_table($atts) {
 			$this->generate_plugin_page();
 		}
 		set_time_limit($max_time);
+		if($local_path !== -1){
+			unlink($local_path);
+		}
+	}
+	
+	private function process_file_in(){
+	
+		if ($_FILES['filename']['error'] > 0){
+			"An error occured, please try again";
+				
+			return -1;
+		}else{
+			$filename = $_FILES['filename']['name'];
+			if(strcmp(pathinfo($filename, PATHINFO_EXTENSION),"csv") != 0){
+				echo "Incorrect file type uploaded";
+				return -1;
+			}
+				
+			$filepath =  dirname(__FILE__)."/". $filename;
+			if (move_uploaded_file($_FILES['filename']['tmp_name'], $filepath)){
+				return $filepath;
+			}
+		}
+		return -1;
 	}
 	
 	/**
