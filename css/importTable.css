@@ -1,3 +1,13 @@
+#import_but {
+    margin-left: 55px;
+    width: 220px;
+    margin-top: 10px;
+}
+
+#mem_desc{
+    float: inherit;
+}
+
 form.import_form{
 	float:left;
 }
