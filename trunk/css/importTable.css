@@ -1,0 +1,55 @@
+#import_but {
+    margin-left: 55px;
+    width: 220px;
+    margin-top: 10px;
+}
+
+#mem_desc{
+    float: inherit;
+}
+
+form.import_form{
+	float:left;
+}
+
+div.used_sort_items, div.unused_sort_items{
+	border: 3px dotted;
+	width: 250px;
+	margin-right: 30px;
+	margin-top:5px;
+	float:left;
+}
+
+div.used_sort_items, div.unused_sort_items h3{
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+#sorttable, #unused_sorttable{
+	min-height:15px;
+	padding-left:45px;
+}
+
+#sorttable li, #unused_sorttable li{
+	width: 140px;
+    font-size:12pt;
+    list-style:none;
+	list-style-position: inside;
+	border: 2px solid black;
+	text-align: center;
+	border-radius: 10px;
+    margin-bottom:10px;
+    padding-top:3px;
+    padding-bottom:3px;
+
+}
+
+#keep{
+	color: red;
+}
+
+.clsBut{
+	position: relative;
+	top: -6px;
+	left: 10px;
+}
