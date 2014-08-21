@@ -4,7 +4,7 @@ Donate link: http://fusiopnspan.com/
 Tags: avectra, netforum, netforum import, plugin
 Requires at least: 3.0.1
 Tested up to: 3.9.2
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -121,6 +121,9 @@ json format
 * Changed import functionality. Now users have to select a file to be uploaded to the server
 * Added three new shortcodes fields to the [member_table] shortcode. thead_color, tfoot_color and color which allows for coloring of the 
 table header and footer. 
+
+= 1.0.6 =
+* Minor addition, added email as an option to import in the import file screen
 
 == Upgrade Notice ==
 

@@ -3,8 +3,8 @@
  * Plugin Name: fusionSpan Netforum Directory with Importer
  * Plugin URI: http://fusionspan.com
  * Description: Allows for easier netforum integration into wordpress
- * Author: fusionSpan
- * Version: 1.0.5
+ * Author: Gayathri Kher
+ * Version: 1.0.6
  */
 
 if (!defined('ABSPATH')) wp_die("Script should not be called directly");
