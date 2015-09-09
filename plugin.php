@@ -2,9 +2,9 @@
 /**
  * Plugin Name: fusionSpan Netforum Directory with Importer
  * Plugin URI: http://fusionspan.com
- * Description: Allows for easier netforum integration into wordpress
+ * Description: Allows users to import netforum data and display netFORUM directories
  * Author: Gayathri Kher
- * Version: 1.0.6
+ * Version: 1.0.7
  */
 
 if (!defined('ABSPATH')) wp_die("Script should not be called directly");
@@ -13,7 +13,7 @@ class fs_netforum_plugin {
 	private $updateFlag = true;
 	static $table_shortcode = "member_table";
 	static $json_shortcode = "member_table_url";
-	static $database_version = "1.2";
+	static $database_version = "1.3";
 	
 	public function __construct(){
 		add_action('admin_menu', array($this, 'fs_plugin_menu'));
@@ -413,7 +413,7 @@ function json_table($atts) {
 		
 		add_option('fsnet_json_key',$pass,"","no");
 		
-		if (get_option('fsnet_db_version_input') != self::$database_version){
+		if (is_numeric(get_option('fsnet_db_version_sync', 0)) && get_option('fsnet_db_version_sync') < self::$database_version){
 		
 			$wp_charset_collate = "";
 			if(!empty($wpdb->charset)){
@@ -426,30 +426,31 @@ function json_table($atts) {
 			
 			$sql_users = "CREATE TABLE {$wpdb->prefix}fsnet_user_master (
 			id int(11) NOT NULL AUTO_INCREMENT,
-			external_id varchar(255) DEFAULT NULL,
-			name varchar(255) DEFAULT NULL,
-			email varchar(255) DEFAULT NULL,
-			middle_name varchar(255) DEFAULT NULL,
-			last_name varchar(255) DEFAULT NULL,
+			external_id varchar(190) DEFAULT NULL,
+			name varchar(190) DEFAULT NULL,
+			email varchar(190) DEFAULT NULL,
+			middle_name varchar(190) DEFAULT NULL,
+			last_name varchar(190) DEFAULT NULL,
 			title varchar(100) DEFAULT NULL,
-			name_prefix varchar(255) DEFAULT NULL,
-			name_suffix varchar(255) DEFAULT NULL,
-			address1 varchar(255) DEFAULT NULL,
-			address2 varchar(255) DEFAULT NULL,
-			address3 varchar(255) DEFAULT NULL,
-			city varchar(255) DEFAULT NULL,
-			state varchar(255) DEFAULT NULL,
-			zipcode varchar(255) DEFAULT NULL,
-			country varchar(255) DEFAULT NULL,
-			phone_no varchar(255) DEFAULT NULL,
-			designation varchar(255) DEFAULT NULL,
-			department varchar(255) DEFAULT NULL,
-			domain_name varchar(255) DEFAULT NULL,
-			employment_org varchar(255) DEFAULT NULL,
-			position varchar(255) DEFAULT NULL,
+			name_prefix varchar(190) DEFAULT NULL,
+			name_suffix varchar(190) DEFAULT NULL,
+			address1 varchar(190) DEFAULT NULL,
+			address2 varchar(190) DEFAULT NULL,
+			address3 varchar(190) DEFAULT NULL,
+			city varchar(190) DEFAULT NULL,
+			state varchar(190) DEFAULT NULL,
+			zipcode varchar(190) DEFAULT NULL,
+			country varchar(190) DEFAULT NULL,
+			phone_no varchar(190) DEFAULT NULL,
+			designation varchar(190) DEFAULT NULL,
+			department varchar(190) DEFAULT NULL,
+			domain_name varchar(190) DEFAULT NULL,
+			employment_org varchar(190) DEFAULT NULL,
+			position varchar(190) DEFAULT NULL,
 			do_not_publish_online BOOLEAN NOT NULL DEFAULT FALSE,
 			is_member BOOLEAN NOT NULL DEFAULT FALSE,
 			recv_benefits BOOLEAN NOT NULL DEFAULT FALSE,
+			cst_type varchar(80) DEFAULT 'Individual',
 			UNIQUE KEY external_id (external_id),
 			PRIMARY KEY  (id)
 			) {$wp_charset_collate};";
@@ -463,9 +464,9 @@ function json_table($atts) {
 
 		//checks if the table was created and set the version if it is
 		if($wpdb->get_var("SHOW TABLES LIKE '" . $wpdb -> prefix . "fsnet_user_master'") === $wpdb->prefix."fsnet_user_master") {
-			update_option('fsnet_db_version_import',self::$database_version);
+			update_option('fsnet_db_version_sync',self::$database_version);
 		}else{
-			delete_option('fsnet_db_version_import');
+			delete_option('fsnet_db_version_sync');
 		}
 	}
 			
