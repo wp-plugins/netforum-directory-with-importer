@@ -4,7 +4,7 @@
  * Plugin URI: http://fusionspan.com
  * Description: Allows users to import netforum data and display netFORUM directories
  * Author: Gayathri Kher
- * Version: 1.0.7
+ * Version: 1.0.8
  */
 
 if (!defined('ABSPATH')) wp_die("Script should not be called directly");
@@ -32,8 +32,9 @@ class fs_netforum_plugin {
 		if( is_a($post, 'WP_Post') && (has_shortcode($post->post_content, self::$table_shortcode) || has_shortcode($post->post_content, self::$json_shortcode))){
 			wp_enqueue_script('jquery');
 			wp_enqueue_script('fsnet_tableDisplay',plugins_url('js/tableDisplay.js',__FILE__));
-			wp_enqueue_script('fsnet_dataTablesMin',plugins_url('js/Datatables/jquery.dataTables.min.js',__FILE__));
-			wp_enqueue_style('fsnet_dataTablesMin_css',plugins_url('css/jquery.dataTables.min.css',__FILE__));
+			
+			wp_enqueue_script('fsnet_dataTablesMin','//cdn.datatables.net/1.10.8/js/jquery.dataTables.js');
+			wp_enqueue_style('fsnet_dataTablesMin_css','https://cdn.datatables.net/1.10.8/css/jquery.dataTables.min.css');
 			wp_enqueue_style('fsnet_dataTablesThemeRollerMin_css',plugins_url('css/jquery.dataTables_themeroller.min.css',__FILE__));
 		} 
 	}
@@ -175,7 +176,7 @@ function json_table($atts) {
 		$retVal .= '
 <div class="container">
 	<section>
-		<table id="example1" class="display"
+		<table id="example1" class="display compact"
 			cellspacing="0" width="100%">
 			<thead style="background-color: '. $color_head .' ;">
 			<tr>'
