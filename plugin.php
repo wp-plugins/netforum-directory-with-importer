@@ -4,7 +4,7 @@
  * Plugin URI: http://fusionspan.com
  * Description: Allows users to import netforum data and display netFORUM directories
  * Author: Gayathri Kher
- * Version: 1.0.8
+ * Version: 1.0.9
  */
 
 if (!defined('ABSPATH')) wp_die("Script should not be called directly");
